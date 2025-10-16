@@ -1,79 +1,102 @@
-// src/screens/SettingsScreen.js
 import React from "react";
-import { View, Text, StyleSheet, Switch } from "react-native";
-import PressableScale from "../components/PressableScale";
-import { loadJSON, saveJSON } from "../lib/storage";
+import { View, Text, Switch, StyleSheet, SafeAreaView } from "react-native";
 import { colors } from "../theme/colors";
+import { loadJSON } from "../lib/storage";
+import {
+  getState,
+  setSoundEnabled,
+  setHapticsEnabled,
+} from "../lib/sound";
+
+const K_SOUND = "@settings:soundEnabled";
+const K_HAPTICS = "@settings:hapticsEnabled";
 
 export default function SettingsScreen() {
-  const [pairStep, setPairStep] = React.useState(2);
   const [sound, setSound] = React.useState(true);
   const [haptics, setHaptics] = React.useState(true);
 
   React.useEffect(() => {
-    let mounted = true;
     (async () => {
-      const [ps, snd, hap] = await Promise.all([
-        loadJSON("pairStep", 2), loadJSON("sound", true), loadJSON("haptics", true)
-      ]);
-      if (!mounted) return;
-      setPairStep(ps); setSound(!!snd); setHaptics(!!hap);
+      const savedSound = await loadJSON(K_SOUND, null);
+      const savedHaptics = await loadJSON(K_HAPTICS, null);
+      const fallback = getState();
+      setSound(savedSound === null ? fallback.soundEnabled : !!savedSound);
+      setHaptics(savedHaptics === null ? fallback.hapticsEnabled : !!savedHaptics);
     })();
-    return () => { mounted = false; };
   }, []);
 
-  const pick = async (val) => { setPairStep(val); await saveJSON("pairStep", val); };
-  const toggle = async (key, value, setter) => { const v = !value; setter(v); await saveJSON(key, v); };
+  const onToggleSound = async (v) => {
+    setSound(v);
+    await setSoundEnabled(v);
+  };
+
+  const onToggleHaptics = async (v) => {
+    setHaptics(v);
+    await setHapticsEnabled(v);
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.h2}>Настройки</Text>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Настройки</Text>
 
-      <Text style={styles.section}>Card Match — увеличение пар за раунд</Text>
       <View style={styles.row}>
-        <PressableScale onPress={() => pick(2)} style={[styles.opt, pairStep === 2 && styles.optActive]}>
-          <Text style={[styles.optText, pairStep === 2 && styles.optTextActive]}>+2 пары</Text>
-        </PressableScale>
-        <PressableScale onPress={() => pick(4)} style={[styles.opt, pairStep === 4 && styles.optActive]}>
-          <Text style={[styles.optText, pairStep === 4 && styles.optTextActive]}>+4 пары</Text>
-        </PressableScale>
-      </View>
-
-      <Text style={styles.section}>Мультимедиа</Text>
-      <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>Звук</Text>
+        <Text style={styles.label}>Звук интерфейса</Text>
         <Switch
           value={sound}
-          onValueChange={() => toggle("sound", sound, setSound)}
-          trackColor={{ true: colors.primary, false: colors.outline }}
-          thumbColor={colors.bg}
-        />
-      </View>
-      <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>Вибро</Text>
-        <Switch
-          value={haptics}
-          onValueChange={() => toggle("haptics", haptics, setHaptics)}
-          trackColor={{ true: colors.primary, false: colors.outline }}
-          thumbColor={colors.bg}
+          onValueChange={onToggleSound}
+          thumbColor={sound ? colors.primary : "#aaa"}
+          trackColor={{ false: "#3a3f4b", true: "#334155" }}
         />
       </View>
 
-      <Text style={styles.note}>Настройки сохраняются локально (AsyncStorage).</Text>
-    </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Вибрация</Text>
+        <Switch
+          value={haptics}
+          onValueChange={onToggleHaptics}
+          thumbColor={haptics ? colors.primary : "#aaa"}
+          trackColor={{ false: "#3a3f4b", true: "#334155" }}
+        />
+      </View>
+
+      <Text style={styles.hint}>
+        Звук клика срабатывает при нажатии на все кнопки интерфейса.
+        Отключите «Звук», если хотите играть без аудио.
+      </Text>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 18, gap: 14, backgroundColor: colors.bg },
-  h2: { fontSize: 22, fontWeight: "800", textAlign: "center", color: colors.text },
-  section: { marginTop: 6, fontSize: 16, fontWeight: "700", color: colors.text },
-  row: { flexDirection: "row", justifyContent: "center", gap: 10, marginTop: 10 },
-  opt: { paddingVertical: 12, paddingHorizontal: 18, borderWidth: 2, borderColor: colors.primary, borderRadius: 12, backgroundColor: colors.surface },
-  optActive: { backgroundColor: colors.primary },
-  optText: { color: colors.primary, fontWeight: "800" },
-  optTextActive: { color: colors.primaryText },
-  switchRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderColor: colors.outline },
-  switchLabel: { fontSize: 16, color: colors.text },
-  note: { fontSize: 12, textAlign: "center", color: colors.subtext, marginTop: 10 },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: colors.bg ?? "#0b0f1a",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: colors.text ?? "#fff",
+    marginBottom: 24,
+  },
+  row: {
+    height: 56,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    backgroundColor: colors.card ?? "#111827",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 16,
+    color: colors.text ?? "#fff",
+  },
+  hint: {
+    marginTop: 16,
+    color: "#97a3b6",
+    fontSize: 13,
+    lineHeight: 18,
+  },
 });
