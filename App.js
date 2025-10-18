@@ -30,7 +30,7 @@ export default function App() {
             contentStyle: { backgroundColor: colors.bg },
           }}
         >
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: "Brain & Memory" }} />
+          <Stack.Screen name="Home" component={HomeScreen} options={{ title: "Brain Memory" }} />
           <Stack.Screen name="NumberMemory" component={NumberMemoryScreen} options={{ title: "Number Memory" }} />
           <Stack.Screen name="SequenceMemory" component={SequenceMemoryScreen} options={{ title: "Sequence Memory" }} />
           <Stack.Screen name="ChimpTest" component={ChimpTestScreen} options={{ title: "Chimp Test" }} />

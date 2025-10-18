@@ -16,20 +16,20 @@ const Btn = ({ title, onPress, variant = "primary" }) => {
 export default function HomeScreen({ navigation }) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.h1}>Brain & Memory</Text>
-      <Text style={styles.p}>Тренируй память и внимание. Жёлтый — ключевые действия, тёмный — фон.</Text>
+      <Text style={styles.h1}>Brain Memory</Text>
+      <Text style={styles.p}>Тренируй память и внимание</Text>
 
-      <Btn title="▶ Number Memory" onPress={() => navigation.navigate("NumberMemory")} />
-      <Btn title="▶ Sequence Memory" onPress={() => navigation.navigate("SequenceMemory")} />
-      <Btn title="▶ Chimp Test" onPress={() => navigation.navigate("ChimpTest")} />
-      <Btn title="▶ Verbal Memory" onPress={() => navigation.navigate("VerbalMemory")} />
-      <Btn title="▶ Card Match (эмодзи)" onPress={() => navigation.navigate("CardMatch")} />
+      <Btn title="Number Memory" onPress={() => navigation.navigate("NumberMemory")} />
+      <Btn title="Sequence Memory" onPress={() => navigation.navigate("SequenceMemory")} />
+      <Btn title="Chimp Test" onPress={() => navigation.navigate("ChimpTest")} />
+      <Btn title="Verbal Memory" onPress={() => navigation.navigate("VerbalMemory")} />
+      <Btn title="Card Match (эмодзи)" onPress={() => navigation.navigate("CardMatch")} />
 
-      <Btn title="👤 Профиль" onPress={() => navigation.navigate("Profile")} />
-      <Btn title="⚙ Настройки" variant="outline" onPress={() => navigation.navigate("Settings")} />
-      <Btn title="ℹ О нас" variant="outline" onPress={() => navigation.navigate("About")} />
+      <Btn title="Профиль" onPress={() => navigation.navigate("Profile")} />
+      <Btn title="Настройки" variant="outline" onPress={() => navigation.navigate("Settings")} />
+      <Btn title="О нас" variant="outline" onPress={() => navigation.navigate("About")} />
 
-      <Text style={styles.note}>Совет: играй короткими сессиями, но регулярно.</Text>
+      <Text style={styles.note}>Совет: регулярно играйте короткими сессиями</Text>
     </ScrollView>
   );
 }
