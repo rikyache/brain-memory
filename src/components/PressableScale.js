@@ -1,7 +1,6 @@
-// src/components/PressableScale.js
 import React from "react";
 import { Animated, Pressable } from "react-native";
-import { click } from "../lib/sound";
+import { click, play } from "../lib/sound";
 
 export default function PressableScale({
   children,
@@ -10,6 +9,7 @@ export default function PressableScale({
   style,
   scaleTo = 0.96,
   duration = 70,
+  soundKey = "click",
   ...rest
 }) {
   const scale = React.useRef(new Animated.Value(1)).current;
@@ -28,13 +28,29 @@ export default function PressableScale({
       useNativeDriver: true,
     }).start();
 
-  const handlePress = async () => {
+  const handlePress = async (e) => {
     if (disabled) return;
-    // Сначала — звуковой клик + лёгкий хэптик (если включены в настройках)
-    await click().catch(() => {});
-    // Затем — действие кнопки
+
+    // 1) Звук (если не отключён)
+    try {
+      if (soundKey) {
+        if (soundKey === "click") await click();
+        else await play(soundKey);
+      }
+    } catch {
+      // молча игнорируем ошибки звука (особенно Web autoplay)
+    }
+
+    // 2) Действие кнопки (с поддержкой async)
     if (typeof onPress === "function") {
-      await Promise.resolve(onPress());
+      try {
+        const maybePromise = onPress(e);
+        if (maybePromise && typeof maybePromise.then === "function") {
+          await maybePromise;
+        }
+      } catch {
+        // не роняем UI из-за исключений из onPress
+      }
     }
   };
 

@@ -3,96 +3,92 @@ import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { loadJSON, saveJSON } from "./storage";
 
-const K_SOUND = "@settings:soundEnabled";
+// Settings keys
+const K_SOUND   = "@settings:soundEnabled";
 const K_HAPTICS = "@settings:hapticsEnabled";
-const K_VOLUME = "@settings:volume";
+const K_VOLUME  = "@settings:volume";
 
 let soundEnabled = true;
 let hapticsEnabled = true;
 let volume = 1.0;
 
-// Кэш Audio.Sound по ключу
-const cache = new Map();
-
-// Маппинг коротких ключей на ассеты
-const SOUND_MAP = {
-  click: require("../../assets/sounds/ui-click.mp3"),
+// Регистр звуков (положи файлы в /assets/sounds)
+const REGISTRY = {
+  click:   require("../../assets/sounds/ui-click.mp3"),
+  match:   require("../../assets/sounds/match.mp3"),
+  wrong:   require("../../assets/sounds/wrong.mp3"),
+  win:     require("../../assets/sounds/win.mp3"),
+  lose:    require("../../assets/sounds/lose.mp3"),
+  record:  require("../../assets/sounds/record.mp3"),
 };
 
-// Загружаем (лениво) и отдаём экземпляр звука
-async function getSound(key) {
-  if (!SOUND_MAP[key]) throw new Error(`Unknown sound key: ${key}`);
+const cache = new Map(); // Map<key, Audio.Sound>
+
+async function ensureLoaded(key) {
   if (cache.has(key)) return cache.get(key);
-
-  const { sound } = await Audio.Sound.createAsync(SOUND_MAP[key], {
-    volume,
-    shouldPlay: false,
-  });
-  cache.set(key, sound);
-  return sound;
+  const module = REGISTRY[key];
+  if (!module) return null;
+  const snd = new Audio.Sound();
+  await snd.loadAsync(module, { volume, shouldPlay: false }, false);
+  cache.set(key, snd);
+  return snd;
 }
 
-export async function play(key) {
-  if (!soundEnabled) return;
-  try {
-    const snd = await getSound(key);
-
-    await snd.setPositionAsync(0);
-    await snd.setVolumeAsync(volume);
-    await snd.playAsync();
-  } catch (e) {
-  }
-}
-
-// клик + вибрация
-export async function click() {
-  await play("click");
-  if (hapticsEnabled) {
-    try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
-  }
-}
-
-// --- Настройки и инициализация ---
-
-export async function initSoundSettings() {
-  const [snd, hap, vol] = await Promise.all([
+export async function initSound() {
+  const [s, h, v] = await Promise.all([
     loadJSON(K_SOUND, true),
     loadJSON(K_HAPTICS, true),
     loadJSON(K_VOLUME, 1.0),
   ]);
-  soundEnabled = !!snd;
-  hapticsEnabled = !!hap;
-  volume = Math.min(1, Math.max(0, Number(vol) || 1));
-  try { await getSound("click"); } catch {}
+  soundEnabled = !!s;
+  hapticsEnabled = !!h;
+  volume = typeof v === "number" ? v : 1.0;
+
+  await Audio.setAudioModeAsync({
+    playsInSilentModeIOS: true,
+    allowsRecordingIOS: false,
+    staysActiveInBackground: false,
+    interruptionModeIOS: 1,
+  });
+
+  await Promise.all(
+    [...cache.values()].map(snd => snd.setVolumeAsync(volume).catch(()=>{}))
+  );
 }
 
-export function getState() {
-  return { soundEnabled, hapticsEnabled, volume };
-}
-
-export async function setSoundEnabled(v) {
-  soundEnabled = !!v;
-  await saveJSON(K_SOUND, soundEnabled);
-}
-
-export async function setHapticsEnabled(v) {
-  hapticsEnabled = !!v;
-  await saveJSON(K_HAPTICS, hapticsEnabled);
-}
-
-export async function setVolume(v) {
-  volume = Math.min(1, Math.max(0, Number(v) || 0));
+export function getState() { return { soundEnabled, hapticsEnabled, volume }; }
+export async function setSoundEnabled(v){ soundEnabled = !!v; await saveJSON(K_SOUND, soundEnabled); }
+export async function setHapticsEnabled(v){ hapticsEnabled = !!v; await saveJSON(K_HAPTICS, hapticsEnabled); }
+export async function setVolume(v){
+  volume = Math.max(0, Math.min(1, Number(v) || 0));
   await saveJSON(K_VOLUME, volume);
-
-  await Promise.all(
-    [...cache.values()].map(s => s?.setVolumeAsync?.(volume).catch(() => {}))
-  );
+  await Promise.all([...cache.values()].map(snd => snd.setVolumeAsync(volume).catch(()=>{})));
 }
 
-// Освобождение ресурсов 
+export async function play(key, opts = {}) {
+  if (!soundEnabled) return;
+  try {
+    const snd = await ensureLoaded(key);
+    if (!snd) return;
+    await snd.setPositionAsync(0);
+    if (opts.volume != null) await snd.setVolumeAsync(opts.volume);
+    await snd.playAsync();
+  } catch (e) { /* web autoplay restrictions — ок, молчим */ }
+
+  if (hapticsEnabled && (opts.haptic ?? true)) {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+  }
+}
+
+// Шорткаты
+export const click  = () => play("click",  { haptic: true });
+export const match  = () => play("match");
+export const wrong  = () => play("wrong");
+export const win    = () => play("win");
+export const lose   = () => play("lose");
+export const record = () => play("record", { haptic: true });
+
 export async function unloadAllSounds() {
-  await Promise.all(
-    [...cache.values()].map(s => s?.unloadAsync?.().catch(() => {}))
-  );
+  await Promise.all([...cache.values()].map(snd => snd.unloadAsync().catch(()=>{})));
   cache.clear();
 }

@@ -1,10 +1,10 @@
-// src/screens/CardMatchScreen.js
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import PressableScale from "../components/PressableScale";
 import { shuffle } from "../lib/utils";
 import { loadJSON, saveJSON } from "../lib/storage";
 import { colors } from "../theme/colors";
+import { play } from "../lib/sound"; // <-- добавили
 
 // Палитра владельца пары
 const P1_COLOR = "#EDEDED"; // белый (игрок 1)
@@ -102,6 +102,9 @@ export default function CardMatchScreen() {
               // увеличить счёт и matchedPairs
               setMatchedPairs(m => m + 1);
               if (current === 1) setScore1(s => s + 1); else setScore2(s => s + 1);
+
+              // проиграть звук совпадения
+              play("match");
 
               // текущий сохраняет ход (НЕ переключаем current)
             } else {

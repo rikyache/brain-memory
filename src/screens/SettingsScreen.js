@@ -1,38 +1,57 @@
+// src/screens/SettingsScreen.js
 import React from "react";
 import { View, Text, Switch, StyleSheet, SafeAreaView } from "react-native";
+import Slider from "@react-native-community/slider"; // default import!
 import { colors } from "../theme/colors";
 import { loadJSON } from "../lib/storage";
 import {
   getState,
   setSoundEnabled,
   setHapticsEnabled,
+  setVolume,
 } from "../lib/sound";
 
 const K_SOUND = "@settings:soundEnabled";
 const K_HAPTICS = "@settings:hapticsEnabled";
+const K_VOLUME = "@settings:volume";
 
 export default function SettingsScreen() {
-  const [sound, setSound] = React.useState(true);
-  const [haptics, setHaptics] = React.useState(true);
+  // начальные значения берём синхронно из sound.js
+  const initial = getState();
+  const [sound, setSound] = React.useState(initial.soundEnabled);
+  const [haptics, setHaptics] = React.useState(initial.hapticsEnabled);
+  const [volume, setVol] = React.useState(
+    typeof initial.volume === "number" ? initial.volume : 1
+  );
 
+  // Подтягиваем сохранённые значения (на случай, если они уже были в storage)
   React.useEffect(() => {
     (async () => {
-      const savedSound = await loadJSON(K_SOUND, null);
-      const savedHaptics = await loadJSON(K_HAPTICS, null);
-      const fallback = getState();
-      setSound(savedSound === null ? fallback.soundEnabled : !!savedSound);
-      setHaptics(savedHaptics === null ? fallback.hapticsEnabled : !!savedHaptics);
+      try {
+        const savedSound = await loadJSON(K_SOUND, null);
+        if (savedSound !== null) setSound(!!savedSound);
+
+        const savedHaptics = await loadJSON(K_HAPTICS, null);
+        if (savedHaptics !== null) setHaptics(!!savedHaptics);
+
+        const savedVolume = await loadJSON(K_VOLUME, null);
+        if (typeof savedVolume === "number") setVol(savedVolume);
+      } catch {}
     })();
   }, []);
 
   const onToggleSound = async (v) => {
     setSound(v);
-    await setSoundEnabled(v);
+    try { await setSoundEnabled(v); } catch {}
   };
 
   const onToggleHaptics = async (v) => {
     setHaptics(v);
-    await setHapticsEnabled(v);
+    try { await setHapticsEnabled(v); } catch {}
+  };
+
+  const onVolumeDone = async (v) => {
+    try { await setVolume(v); } catch {}
   };
 
   return (
@@ -49,6 +68,19 @@ export default function SettingsScreen() {
         />
       </View>
 
+      <View style={{ width: "100%", marginTop: 8, marginBottom: 8 }}>
+        <Slider
+          style={{ width: "100%", height: 40 }}
+          minimumValue={0}
+          maximumValue={1}
+          step={0.01}
+          value={volume}
+          onValueChange={setVol}
+          onSlidingComplete={onVolumeDone}
+        />
+        <Text style={styles.hint}>Громкость: {Math.round(volume * 100)}%</Text>
+      </View>
+
       <View style={styles.row}>
         <Text style={styles.label}>Вибрация</Text>
         <Switch
@@ -60,8 +92,9 @@ export default function SettingsScreen() {
       </View>
 
       <Text style={styles.hint}>
-        Звук клика срабатывает при нажатии на все кнопки интерфейса.
-        Отключите «Звук», если хотите играть без аудио.
+        Звук клика срабатывает при нажатии на все кнопки интерфейса. Вы можете
+        отключить звук или отрегулировать громкость. На iOS звук активен даже в
+        беззвучном режиме (игровой режим).
       </Text>
     </SafeAreaView>
   );
