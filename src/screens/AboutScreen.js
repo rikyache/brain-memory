@@ -10,7 +10,7 @@ export default function AboutScreen() {
       <Text style={styles.p}>
         Учебный проект по мобильной разработке (React Native, Expo).
       </Text>
-      <Text style={styles.pBold}>Команда: sxd0 · rikyache · feedbackW · sldkmay</Text>
+      <Text style={styles.pBold}>Команда: sxd0  rikyache  feedbackW  sldkmay</Text>
       <Text style={styles.pSmall}>
         Дальше: мультимедиа (звук/вибро/анимации), расширенные словари и экспорт прогресса.
       </Text>

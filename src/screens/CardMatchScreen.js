@@ -99,7 +99,7 @@ export default function CardMatchScreen() {
               // Пара угадана текущим игроком
               A.matched = B.matched = true;
               A.owner = B.owner = current;
-              // увеличим счёт и matchedPairs
+              // увеличить счёт и matchedPairs
               setMatchedPairs(m => m + 1);
               if (current === 1) setScore1(s => s + 1); else setScore2(s => s + 1);
 

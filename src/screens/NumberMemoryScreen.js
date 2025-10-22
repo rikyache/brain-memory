@@ -21,7 +21,7 @@ export default function NumberMemoryScreen() {
     setPhase("show");
     setInput("");
     // время показа = длина числа - 0.2 (но не меньше 0.4с)
-    const seconds = Math.max(0.4, t.length - 0.2);
+    const seconds = Math.max(0.4, t.length);
     const id = setTimeout(() => setPhase("input"), Math.round(seconds * 1000));
     return () => clearTimeout(id);
   }, [level]);
