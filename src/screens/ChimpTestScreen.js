@@ -87,7 +87,7 @@ export default function ChimpTestScreen() {
       <Text style={styles.meta}>N={n} · Strikes {strikes}/3 · Best {best}</Text>
 
       <View style={styles.grid}>
-        {Array.from({ length: 25 }, (_, i) => {
+        {Array.from({ length: 24 }, (_, i) => {
           const cell = cells.find(c => c.pos === i);
           const showNum = !hidden && !!cell;
           return (
