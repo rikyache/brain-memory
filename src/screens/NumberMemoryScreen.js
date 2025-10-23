@@ -4,43 +4,63 @@ import { View, Text, StyleSheet, TextInput } from "react-native";
 import PressableScale from "../components/PressableScale";
 import { genNumberOfDigits } from "../lib/utils";
 import { loadJSON, saveJSON } from "../lib/storage";
+import { match, lose } from "../lib/sound";
 import { colors } from "../theme/colors";
 
 export default function NumberMemoryScreen() {
   const [level, setLevel] = React.useState(1);
   const [target, setTarget] = React.useState("");
-  const [phase, setPhase] = React.useState("ready"); // ready | show | input | over
+  const [phase, setPhase] = React.useState("show"); // show | input | over
   const [input, setInput] = React.useState("");
   const [best, setBest] = React.useState(0);
 
   React.useEffect(() => { loadJSON("nm_best", 0).then(setBest); }, []);
 
-  const startLevel = React.useCallback(() => {
+  // Показываем число при каждом новом уровне
+  React.useEffect(() => {
     const t = genNumberOfDigits(level);
     setTarget(t);
     setPhase("show");
     setInput("");
-    // время показа = длина числа - 0.2 (но не меньше 0.4с)
+
+    // время показа = длина числа (секунд), минимум 0.4s
     const seconds = Math.max(0.4, t.length);
     const id = setTimeout(() => setPhase("input"), Math.round(seconds * 1000));
     return () => clearTimeout(id);
   }, [level]);
 
-  React.useEffect(() => { if (phase === "ready") startLevel(); }, [phase, startLevel]);
-
+  // Твоя рабочая логика + звуки
   const onSubmit = async () => {
     const ok = input.trim() === target;
+
     if (ok) {
+      try { await match(); } catch {}
+
       const next = level + 1;
-      if (next - 1 > best) { setBest(next - 1); await saveJSON("nm_best", next - 1); }
-      if (next > 20) { setPhase("over"); } else { setLevel(next); setPhase("ready"); }
+      if (next - 1 > best) {
+        setBest(next - 1);
+        await saveJSON("nm_best", next - 1);
+      }
+      if (next > 20) {
+        setPhase("over");
+      } else {
+        setLevel(next); // эффект сам запустит показ следующего числа
+      }
     } else {
-      if (level - 1 > best) { setBest(level - 1); await saveJSON("nm_best", level - 1); }
+      try { await lose(); } catch {}
+
+      if (level - 1 > best) {
+        setBest(level - 1);
+        await saveJSON("nm_best", level - 1);
+      }
       setPhase("over");
     }
   };
 
-  const restart = () => { setLevel(1); setPhase("ready"); };
+  const restart = () => {
+    setLevel(1);         // эффект сам начнёт показ
+    setPhase("show");
+  };
 
   return (
     <View style={styles.container}>
@@ -57,9 +77,14 @@ export default function NumberMemoryScreen() {
             placeholder="…"
             placeholderTextColor={colors.subtext}
             keyboardType="numeric"
+            inputMode="numeric"
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={onSubmit}
+            blurOnSubmit={false}
             style={styles.input}
           />
-          <PressableScale style={styles.btn} onPress={onSubmit}>
+          <PressableScale style={styles.btn} onPress={onSubmit} soundKey={null}>
             <Text style={styles.btnText}>Проверить</Text>
           </PressableScale>
         </>
@@ -69,7 +94,7 @@ export default function NumberMemoryScreen() {
         <View style={styles.overlay}>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Игра окончена</Text>
-            <Text style={styles.cardText}>Достигнут уровень: {level}</Text>
+            <Text style={styles.cardText}>Достигнут уровень: {level - 1}</Text>
             <PressableScale style={styles.btn} onPress={restart}>
               <Text style={styles.btnText}>Заново</Text>
             </PressableScale>

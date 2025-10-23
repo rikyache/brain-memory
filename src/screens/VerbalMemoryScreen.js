@@ -1,10 +1,10 @@
-// src/screens/VerbalMemoryScreen.js
 import React from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import PressableScale from "../components/PressableScale";
 import { loadJSON, saveJSON } from "../lib/storage";
 import { fetchWords } from "../lib/api";
 import { colors } from "../theme/colors";
+import { win, wrong, lose } from "../lib/sound"; // ← добавили звуки
 
 export default function VerbalMemoryScreen() {
   const [seen, setSeen] = React.useState(new Set());
@@ -24,8 +24,8 @@ export default function VerbalMemoryScreen() {
     fetchWords(controller.signal).then(w => {
       setPool(w);
       setLoading(false);
-      setWord(w[Math.floor(Math.random()*w.length)]);
-    });
+      setWord(w[Math.floor(Math.random() * w.length)]);
+    }).catch(() => setLoading(false));
     return () => controller.abort();
   }, []);
 
@@ -34,9 +34,9 @@ export default function VerbalMemoryScreen() {
     const wantSeen = Math.random() < 0.4 && seen.size > 0;
     if (wantSeen) {
       const arr = Array.from(seen);
-      setWord(arr[Math.floor(Math.random()*arr.length)]);
+      setWord(arr[Math.floor(Math.random() * arr.length)]);
     } else {
-      setWord(pool[Math.floor(Math.random()*pool.length)]);
+      setWord(pool[Math.floor(Math.random() * pool.length)]);
     }
   };
 
@@ -44,21 +44,36 @@ export default function VerbalMemoryScreen() {
     if (phase !== "play") return;
     const isSeenNow = seen.has(word);
     const correct = (btn === "SEEN" && isSeenNow) || (btn === "NEW" && !isSeenNow);
+
     if (correct) {
+      try { await win(); } catch {}
       setScore(s => s + 1);
-      if (!isSeenNow) { const ns = new Set(seen); ns.add(word); setSeen(ns); }
+      if (!isSeenNow) {
+        const ns = new Set(seen);
+        ns.add(word);
+        setSeen(ns);
+      }
       nextWord();
     } else {
-      const left = lives - 1; setLives(left);
+      const left = lives - 1;
+      setLives(left);
+
       if (left <= 0) {
+        try { await lose(); } catch {}
         if (score > best) { setBest(score); await saveJSON("vm_best", score); }
         setPhase("over");
+      } else {
+        try { await wrong(); } catch {}
+        nextWord();
       }
     }
   };
 
   const restart = () => {
-    setSeen(new Set()); setScore(0); setLives(3); setPhase("play");
+    setSeen(new Set());
+    setScore(0);
+    setLives(3);
+    setPhase("play");
     nextWord();
   };
 
@@ -75,11 +90,12 @@ export default function VerbalMemoryScreen() {
     <View style={styles.container}>
       <Text style={styles.meta}>Lives {lives} · Score {score} · Best {best}</Text>
       <Text style={styles.word}>{word}</Text>
+
       <View style={styles.row}>
-        <PressableScale style={styles.btn} onPress={() => answer("SEEN")}>
+        <PressableScale style={styles.btn} onPress={() => answer("SEEN")} soundKey={null}>
           <Text style={styles.btnText}>SEEN</Text>
         </PressableScale>
-        <PressableScale style={styles.btn} onPress={() => answer("NEW")}>
+        <PressableScale style={styles.btn} onPress={() => answer("NEW")} soundKey={null}>
           <Text style={styles.btnText}>NEW</Text>
         </PressableScale>
       </View>

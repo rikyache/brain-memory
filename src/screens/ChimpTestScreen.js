@@ -5,6 +5,7 @@ import PressableScale from "../components/PressableScale";
 import { shuffle } from "../lib/utils";
 import { loadJSON, saveJSON } from "../lib/storage";
 import { colors } from "../theme/colors";
+import { match, lose, record } from "../lib/sound"; // ← добавили record
 
 export default function ChimpTestScreen() {
   const [n, setN] = React.useState(4);          // начальное количество чисел
@@ -32,7 +33,18 @@ export default function ChimpTestScreen() {
     const s = strikes + 1;
     setStrikes(s);
     if (s >= 3) {
-      if (n - 1 > best) { setBest(n - 1); await saveJSON("chimp_best", n - 1); }
+      // игра закончена → проверяем рекорд
+      const achieved = n - 1;
+      const isNew = achieved > best;
+
+      if (isNew) {
+        setBest(achieved);
+        await saveJSON("chimp_best", achieved);
+        try { await record(); } catch {}
+      } else {
+        try { await lose(); } catch {}
+      }
+
       setPhase("over");
     } else {
       newLayout(n);
@@ -52,9 +64,11 @@ export default function ChimpTestScreen() {
 
     if (cell.num === need) {
       if (need === n) {
+        // успешно закрыли всю последовательность → увеличиваем N и играем match
         const next = n + 1;
         if (next - 1 > best) { setBest(next - 1); await saveJSON("chimp_best", next - 1); }
         setStrikes(0);
+        try { await match(); } catch {}
         setN(next);
       } else {
         setNeed(need + 1);
@@ -77,7 +91,12 @@ export default function ChimpTestScreen() {
           const cell = cells.find(c => c.pos === i);
           const showNum = !hidden && !!cell;
           return (
-            <PressableScale key={i} onPress={() => onPressCell(i)} style={[styles.tile, cell && styles.hasNum]}>
+            <PressableScale
+              key={i}
+              onPress={() => onPressCell(i)}
+              style={[styles.tile, cell && styles.hasNum]}
+              soundKey={null} // клики плиток без звука — логика звуков выше
+            >
               {showNum ? <Text style={styles.num}>{cell?.num}</Text> : <View />}
             </PressableScale>
           );

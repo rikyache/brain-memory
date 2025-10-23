@@ -4,7 +4,7 @@ import PressableScale from "../components/PressableScale";
 import { randInt } from "../lib/utils";
 import { loadJSON, saveJSON } from "../lib/storage";
 import { colors } from "../theme/colors";
-import { win } from "../lib/sound"; // ← добавили
+import { win, match } from "../lib/sound"; // ← добавили
 
 const GRID = 9; // 3x3
 
@@ -44,7 +44,7 @@ export default function SequenceMemoryScreen() {
     if (tile === sequence[idx]) {
       // если закрыли всю последовательность — уровень пройден
       if (idx + 1 === sequence.length) {
-        try { await win(); } catch {}
+        try { await match(); } catch {}
 
         const extended = sequence.concat(randInt(0, GRID - 1));
         setSequence(extended);
@@ -75,7 +75,6 @@ export default function SequenceMemoryScreen() {
               onPress={() => onPressTile(i)}
               style={[styles.tile, isLit && styles.tileLit]}
               disabled={phase !== "input"}
-              // чтобы не звучал ещё и клик по плитке поверх win()
               soundKey={null}
             >
               <View />
