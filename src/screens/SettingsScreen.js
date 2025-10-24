@@ -16,7 +16,7 @@ const K_HAPTICS = "@settings:hapticsEnabled";
 const K_VOLUME = "@settings:volume";
 
 export default function SettingsScreen() {
-  // начальные значения берём синхронно из sound.js
+
   const initial = getState();
   const [sound, setSound] = React.useState(initial.soundEnabled);
   const [haptics, setHaptics] = React.useState(initial.hapticsEnabled);
@@ -24,7 +24,7 @@ export default function SettingsScreen() {
     typeof initial.volume === "number" ? initial.volume : 1
   );
 
-  // Подтягиваем сохранённые значения (на случай, если они уже были в storage)
+
   React.useEffect(() => {
     (async () => {
       try {
