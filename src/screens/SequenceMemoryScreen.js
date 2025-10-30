@@ -1,10 +1,12 @@
+// src/screens/SequenceMemoryScreen.js
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
+import Video from "react-native-video"; // нативное видео для iOS/Android
 import PressableScale from "../components/PressableScale";
 import { randInt } from "../lib/utils";
 import { loadJSON, saveJSON } from "../lib/storage";
 import { colors } from "../theme/colors";
-import { win, match } from "../lib/sound"; // ← добавили
+import { win, match } from "../lib/sound"; // оставим как в твоём коде
 
 const GRID = 9; // 3x3
 
@@ -16,7 +18,9 @@ export default function SequenceMemoryScreen() {
   const [level, setLevel] = React.useState(1);
   const [best, setBest] = React.useState(0);
 
-  React.useEffect(() => { loadJSON("seq_best", 0).then(setBest); }, []);
+  React.useEffect(() => {
+    loadJSON("seq_best", 0).then(setBest);
+  }, []);
 
   // проигрывание/старт уровня
   React.useEffect(() => {
@@ -35,32 +39,43 @@ export default function SequenceMemoryScreen() {
         setIdx(0);
       }
     }, 700);
+
     return () => clearInterval(timer);
-  }, [level]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level]);
 
   const onPressTile = async (tile) => {
     if (phase !== "input") return;
 
     if (tile === sequence[idx]) {
-      // если закрыли всю последовательность — уровень пройден
+      // закрыли всю последовательность — уровень пройден
       if (idx + 1 === sequence.length) {
         try { await match(); } catch {}
-
         const extended = sequence.concat(randInt(0, GRID - 1));
         setSequence(extended);
         setLevel((l) => l + 1);
 
-        if (level > best) { setBest(level); await saveJSON("seq_best", level); }
+        if (level > best) {
+          setBest(level);
+          await saveJSON("seq_best", level);
+        }
       } else {
         setIdx((i) => i + 1);
       }
     } else {
-      if (level - 1 > best) { setBest(level - 1); await saveJSON("seq_best", level - 1); }
+      if (level - 1 > best) {
+        setBest(level - 1);
+        await saveJSON("seq_best", level - 1);
+      }
       setPhase("over");
     }
   };
 
-  const restart = () => { setSequence([]); setLevel(1); setPhase("show"); };
+  const restart = () => {
+    setSequence([]);
+    setLevel(1);
+    setPhase("show");
+  };
 
   return (
     <View style={styles.container}>
@@ -88,6 +103,36 @@ export default function SequenceMemoryScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Ошибка в последовательности</Text>
             <Text style={styles.cardText}>Достигнут уровень: {level - 1}</Text>
+
+            {/* квадратное видео с котом над кнопкой */}
+            <View style={styles.videoWrapper}>
+              {Platform.OS === "web" ? (
+                // WEB: кладём файл в public/videos/cat.mp4
+                <video
+                  src="/videos/cat.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  // для отладки можно включить:
+                  // controls
+                  onError={(e) => console.warn("web video error", e)}
+                />
+              ) : (
+                // NATIVE: локальный файл из assets
+                <Video
+                  source={require("../../assets/videos/cat.mp4")}
+                  style={styles.cardVideo}
+                  resizeMode="cover"
+                  repeat
+                  muted
+                  paused={false}
+                  onError={(e) => console.warn("native video error", e)}
+                />
+              )}
+            </View>
+
             <PressableScale style={styles.btn} onPress={restart}>
               <Text style={styles.btnText}>Заново</Text>
             </PressableScale>
@@ -99,7 +144,11 @@ export default function SequenceMemoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 18, gap: 12, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg },
+  container: {
+    flex: 1, padding: 18, gap: 12,
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: colors.bg
+  },
   meta: { fontSize: 15, color: colors.subtext },
   grid: { width: 280, flexDirection: "row", flexWrap: "wrap", gap: 10, justifyContent: "center" },
   tile: {
@@ -107,10 +156,30 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface2, borderWidth: 2, borderColor: colors.outline
   },
   tileLit: { backgroundColor: colors.tileLit, borderColor: colors.primary },
-  overlay: { position: "absolute", inset: 0, backgroundColor: "#0008", alignItems: "center", justifyContent: "center" },
-  card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.outline, padding: 18, borderRadius: 16, gap: 10, minWidth: 260, alignItems: "center" },
+  overlay: {
+    position: "absolute", inset: 0, backgroundColor: "#0008",
+    alignItems: "center", justifyContent: "center"
+  },
+  card: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.outline,
+    padding: 18, borderRadius: 16, gap: 10, minWidth: 260, alignItems: "center"
+  },
   cardTitle: { fontSize: 18, fontWeight: "900", color: colors.text },
   cardText: { color: colors.subtext, marginBottom: 6 },
+
+  // квадрат 1:1 для видео/гиф
+  videoWrapper: {
+    width: 220,
+    height: 220,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginTop: 4,
+    marginBottom: 6,
+    backgroundColor: "#000",
+    alignSelf: "center",
+  },
+  cardVideo: { width: "100%", height: "100%" },
+
   btn: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 12 },
   btnText: { color: colors.primaryText, fontWeight: "900" },
 });

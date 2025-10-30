@@ -1,6 +1,7 @@
 // src/screens/ChimpTestScreen.js
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
+import Video from "react-native-video"; // iOS/Android
 import PressableScale from "../components/PressableScale";
 import { shuffle } from "../lib/utils";
 import { loadJSON, saveJSON } from "../lib/storage";
@@ -108,6 +109,33 @@ export default function ChimpTestScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Поражение</Text>
             <Text style={styles.cardText}>Последнее N: {n - 1}</Text>
+
+            {/* квадратное видео с котом */}
+            <View style={styles.videoWrapper}>
+              {Platform.OS === "web" ? (
+                <video
+                  src="/videos/cat.mp4"           // public/videos/cat.mp4
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  // controls // ← включи для отладки
+                  onError={(e) => console.warn("web video error", e)}
+                />
+              ) : (
+                <Video
+                  source={require("../../assets/videos/cat.mp4")} // локально для нативных платформ
+                  style={styles.cardVideo}
+                  resizeMode="cover"
+                  repeat
+                  muted
+                  paused={false}
+                  onError={(e) => console.warn("native video error", e)}
+                />
+              )}
+            </View>
+
             <PressableScale style={styles.btn} onPress={restart}>
               <Text style={styles.btnText}>Заново</Text>
             </PressableScale>
@@ -129,10 +157,25 @@ const styles = StyleSheet.create({
   },
   hasNum: { backgroundColor: colors.surface },
   num: { fontSize:18, fontWeight:"900", color: colors.text },
+
   overlay: { position: "absolute", inset: 0, backgroundColor:"#0008", alignItems:"center", justifyContent:"center" },
   card: { backgroundColor: colors.surface, borderWidth:1, borderColor: colors.outline, padding:18, borderRadius:16, gap:10, minWidth:260, alignItems:"center" },
   cardTitle: { fontSize: 18, fontWeight:"900", color: colors.text },
   cardText: { color: colors.subtext, marginBottom: 6 },
+
   btn: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 12 },
   btnText: { color: colors.primaryText, fontWeight:"900" },
+
+  // квадрат 1:1 — общий стиль медиа
+  videoWrapper: {
+    width: 220,
+    height: 220,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginTop: 4,
+    marginBottom: 6,
+    backgroundColor: "#000",
+    alignSelf: "center",
+  },
+  cardVideo: { width: "100%", height: "100%" },
 });

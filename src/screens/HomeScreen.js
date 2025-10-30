@@ -31,18 +31,17 @@ const CardBtn = ({ title, desc, icon = "🧠", onPress }) => (
 );
 
 export default function HomeScreen({ navigation }) {
-  // (6) Скрываем системный заголовок Stack Navigator (если используется)
   useLayoutEffect(() => {
     navigation?.setOptions?.({ headerShown: false, title: "" });
   }, [navigation]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Центрированная кастомная шапка */}
+      {}
       <Text style={styles.h1}>Brain Memory</Text>
       <Text style={styles.p}>Тренируй память и внимание короткими сессиями</Text>
 
-      {/* Тренировки */}
+      {}
       <Text style={styles.sectionTitle}>Тренировки</Text>
       <View style={styles.grid}>
         <CardBtn

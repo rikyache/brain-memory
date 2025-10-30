@@ -1,10 +1,12 @@
+// src/screens/VerbalMemoryScreen.js
 import React from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Platform } from "react-native";
+import Video from "react-native-video"; // iOS/Android
 import PressableScale from "../components/PressableScale";
 import { loadJSON, saveJSON } from "../lib/storage";
 import { fetchWords } from "../lib/api";
 import { colors } from "../theme/colors";
-import { win, wrong, lose } from "../lib/sound"; // ← добавили звуки
+import { win, wrong, lose } from "../lib/sound";
 
 export default function VerbalMemoryScreen() {
   const [seen, setSeen] = React.useState(new Set());
@@ -105,6 +107,33 @@ export default function VerbalMemoryScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Игра окончена</Text>
             <Text style={styles.cardText}>Счёт: {score}</Text>
+
+            {/* квадратное видео с котом, как в NumberMemory */}
+            <View style={styles.videoWrapper}>
+              {Platform.OS === "web" ? (
+                <video
+                  src="/videos/cat.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  // controls // ← включи для отладки при необходимости
+                  onError={(e) => console.warn("web video error", e)}
+                />
+              ) : (
+                <Video
+                  source={require("../../assets/videos/cat.mp4")}
+                  style={styles.cardVideo}
+                  resizeMode="cover"
+                  repeat
+                  muted
+                  paused={false}
+                  onError={(e) => console.warn("native video error", e)}
+                />
+              )}
+            </View>
+
             <PressableScale style={styles.btn} onPress={restart}>
               <Text style={styles.btnText}>Заново</Text>
             </PressableScale>
@@ -126,4 +155,20 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface, borderWidth:1, borderColor: colors.outline, padding:18, borderRadius:16, gap:10, minWidth:260, alignItems:"center" },
   cardTitle: { fontSize: 18, fontWeight:"900", color: colors.text },
   cardText: { color: colors.subtext, marginBottom: 6 },
+
+  // квадрат 1:1 — общий стиль медиа
+  videoWrapper: {
+    width: 220,
+    height: 220,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginTop: 4,
+    marginBottom: 6,
+    backgroundColor: "#000",
+    alignSelf: "center",
+  },
+  cardVideo: {
+    width: "100%",
+    height: "100%",
+  },
 });

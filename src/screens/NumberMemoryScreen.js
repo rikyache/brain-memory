@@ -1,6 +1,7 @@
 // src/screens/NumberMemoryScreen.js
 import React from "react";
-import { View, Text, StyleSheet, TextInput } from "react-native";
+import { View, Text, StyleSheet, TextInput, Platform } from "react-native";
+import Video from "react-native-video"; // для iOS/Android
 import PressableScale from "../components/PressableScale";
 import { genNumberOfDigits } from "../lib/utils";
 import { loadJSON, saveJSON } from "../lib/storage";
@@ -16,26 +17,22 @@ export default function NumberMemoryScreen() {
 
   React.useEffect(() => { loadJSON("nm_best", 0).then(setBest); }, []);
 
-  // Показываем число при каждом новом уровне
   React.useEffect(() => {
     const t = genNumberOfDigits(level);
     setTarget(t);
     setPhase("show");
     setInput("");
 
-    // время показа = длина числа (секунд), минимум 0.4s
     const seconds = Math.max(0.4, t.length);
     const id = setTimeout(() => setPhase("input"), Math.round(seconds * 1000));
     return () => clearTimeout(id);
   }, [level]);
 
-  // Твоя рабочая логика + звуки
   const onSubmit = async () => {
     const ok = input.trim() === target;
 
     if (ok) {
       try { await match(); } catch {}
-
       const next = level + 1;
       if (next - 1 > best) {
         setBest(next - 1);
@@ -44,11 +41,10 @@ export default function NumberMemoryScreen() {
       if (next > 20) {
         setPhase("over");
       } else {
-        setLevel(next); // эффект сам запустит показ следующего числа
+        setLevel(next);
       }
     } else {
       try { await lose(); } catch {}
-
       if (level - 1 > best) {
         setBest(level - 1);
         await saveJSON("nm_best", level - 1);
@@ -58,7 +54,7 @@ export default function NumberMemoryScreen() {
   };
 
   const restart = () => {
-    setLevel(1);         // эффект сам начнёт показ
+    setLevel(1);
     setPhase("show");
   };
 
@@ -95,6 +91,36 @@ export default function NumberMemoryScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Игра окончена</Text>
             <Text style={styles.cardText}>Достигнут уровень: {level - 1}</Text>
+
+            {/* Медиа-квадрат */}
+            <View style={styles.videoWrapper}>
+              {Platform.OS === "web" ? (
+                // WEB: HTML5 video, файл лежит в public/videos/cat.mp4
+                <video
+                  src="/videos/cat.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  // для отладки можно включить:
+                  // controls
+                  onError={(e) => console.warn("web video error", e)}
+                />
+              ) : (
+                // NATIVE: react-native-video
+                <Video
+                  source={require("../../assets/videos/cat.mp4")}
+                  style={styles.cardVideo}
+                  resizeMode="cover"
+                  repeat
+                  muted
+                  paused={false}
+                  onError={(e) => console.warn("native video error", e)}
+                />
+              )}
+            </View>
+
             <PressableScale style={styles.btn} onPress={restart}>
               <Text style={styles.btnText}>Заново</Text>
             </PressableScale>
@@ -125,4 +151,17 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 20, fontWeight: "900", color: colors.text },
   cardText: { color: colors.subtext, marginBottom: 6 },
+
+  // квадрат 1:1
+  videoWrapper: {
+    width: 220,
+    height: 220,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginTop: 4,
+    marginBottom: 6,
+    backgroundColor: "#000",
+    alignSelf: "center",
+  },
+  cardVideo: { width: "100%", height: "100%" },
 });
