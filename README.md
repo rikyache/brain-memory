@@ -42,3 +42,7 @@ package.json
 - `.env` не используется
 - Все зависимости ставятся через `npm install`
 - Для Expo Go достаточно `npm run start`
+
+
+## Тестирование
+- `npm run test`
