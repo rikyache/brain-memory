@@ -1,0 +1,40 @@
+{
+  "cli": {
+    "version": ">= 5.9.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease"
+      },
+      "ios": {
+        "autoIncrement": true,
+        "simulator": false
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "your-apple-id@email.com",
+        "ascAppId": "1234567890",
+        "appleTeamId": "TEAMID123"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account-key.json",
+        "track": "production"
+      }
+    }
+  }
+}

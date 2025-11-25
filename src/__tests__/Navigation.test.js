@@ -1,34 +1,95 @@
 import React from 'react';
-import { render, fireEvent, screen } from '@testing-library/react-native';
+import { render, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeScreen from '../screens/HomeScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import Navigator from '../navigation';
 
-// Мокаем навигацию
-jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({
-    navigate: jest.fn(),
-    setOptions: jest.fn(),
-  }),
+// Моки
+jest.mock('expo-av', () => ({
+  Audio: {
+    setAudioModeAsync: jest.fn(),
+    Sound: jest.fn(() => ({
+      loadAsync: jest.fn(),
+      playAsync: jest.fn(),
+      unloadAsync: jest.fn(),
+    })),
+  },
 }));
 
-// Мокаем хранение данных
+jest.mock('../lib/sound', () => ({
+  initSoundSettings: jest.fn(),
+  click: jest.fn(),
+  play: jest.fn(),
+  getState: jest.fn(() => ({
+    soundEnabled: true,
+    hapticsEnabled: true,
+    volume: 1.0
+  })),
+  setSoundEnabled: jest.fn(),
+  setHapticsEnabled: jest.fn(),
+  setVolume: jest.fn(),
+}));
+
 jest.mock('../lib/storage', () => ({
   saveJSON: jest.fn(),
   loadJSON: jest.fn(() => Promise.resolve(null)),
   removeKey: jest.fn(),
 }));
 
-// Мокаем звуки
-jest.mock('../lib/sound', () => ({
-  click: jest.fn(),
-  play: jest.fn(),
-}));
+describe('Navigation Integration', () => {
+  test('navigates from Home to Number Memory game', async () => {
+    render(
+      <NavigationContainer>
+        <Navigator />
+      </NavigationContainer>
+    );
 
-describe('Navigation', () => {
-  test('renders HomeScreen correctly', () => {
-    render(<HomeScreen />);
-    expect(screen.getByText('Brain Memory')).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText('Brain Memory')).toBeTruthy();
+    });
+
+    const numberMemoryButton = screen.getByText('Number Memory');
+    fireEvent.press(numberMemoryButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Level \d+/)).toBeTruthy();
+    });
+  });
+
+  test('navigates from Home to Settings', async () => {
+    render(
+      <NavigationContainer>
+        <Navigator />
+      </NavigationContainer>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Brain Memory')).toBeTruthy();
+    });
+
+    const settingsButton = screen.getByText('Настройки');
+    fireEvent.press(settingsButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Звук интерфейса')).toBeTruthy();
+    });
+  });
+
+  test('navigates from Home to Profile', async () => {
+    render(
+      <NavigationContainer>
+        <Navigator />
+      </NavigationContainer>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Brain Memory')).toBeTruthy();
+    });
+
+    const profileButton = screen.getByText('Профиль');
+    fireEvent.press(profileButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Number Memory: 0')).toBeTruthy();
+    });
   });
 });

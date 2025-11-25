@@ -1,4 +1,3 @@
-
 // src/navigation.js
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -17,7 +16,16 @@ const Stack = createNativeStackNavigator();
 
 export default function Navigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerTitleAlign: "center" }}>
+    <Stack.Navigator 
+      screenOptions={{ 
+        headerTitleAlign: "center",
+        headerStyle: { backgroundColor: "#111" },
+        headerTintColor: "#fff",
+        headerShadowVisible: false,
+        contentStyle: { backgroundColor: "#0B0B0F" },
+        animation: "slide_from_right",
+      }}
+    >
       <Stack.Screen name="Home" component={HomeScreen} options={{ title: "Brain Memory" }} />
       <Stack.Screen name="NumberMemory" component={NumberMemoryScreen} options={{ title: "Number Memory" }} />
       <Stack.Screen name="SequenceMemory" component={SequenceMemoryScreen} options={{ title: "Sequence Memory" }} />

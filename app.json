@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "brain-memory",
+    "name": "Brain Memory",
     "slug": "brain-memory",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,28 +10,65 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0B0B0F"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.brainmemory.app",
-      "buildNumber": "1.0.0"
+      "bundleIdentifier": "com.sxd0.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photos to let you select images for the card matching game.",
+        "NSCameraUsageDescription": "This app needs camera access to let you take photos for the card matching game.",
+        "NSMicrophoneUsageDescription": "This app needs microphone access for audio features in memory games."
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
+      "bundleIdentifier": "com.sxd0.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0B0B0F"
       },
-      "edgeToEdgeEnabled": true,
-      "versionCode": 1
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "versionCode": 1,
+      "package": "com.brainmemory.app",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Brain Memory - Cognitive Training",
+      "shortName": "Brain Memory",
+      "lang": "en",
+      "description": "Train your memory and attention with scientifically designed exercises"
     },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you select images for the card matching game."
+        }
+      ],
+      [
+        "expo-video"
+      ]
+    ],
     "extra": {
       "eas": {
-        "projectId": "project-id"
+        "projectId": "960bc415-9c26-4d1d-b7f6-3333291e39bd"
       }
-    }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "owner": "sxd0"
   }
 }
