@@ -1,12 +1,13 @@
 // src/screens/SequenceMemoryScreen.js
 import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
-import Video from "react-native-video"; // нативное видео для iOS/Android
+import { Video } from "expo-av"; // нативное видео для iOS/Android
 import PressableScale from "../components/PressableScale";
 import { randInt } from "../lib/utils";
 import { loadJSON, saveJSON } from "../lib/storage";
 import { colors } from "../theme/colors";
-import { win, match } from "../lib/sound"; // оставим как в твоём коде
+import { win, match } from "../lib/sound";
+import { triggerHapticFeedback, shareResults, notifyNewRecord } from "../lib/platformFeatures";
 
 const GRID = 9; // 3x3
 
@@ -18,8 +19,14 @@ export default function SequenceMemoryScreen() {
   const [level, setLevel] = React.useState(1);
   const [best, setBest] = React.useState(0);
 
+  // Используем ref для отслеживания изначального best
+  const initialBestRef = React.useRef(0);
+
   React.useEffect(() => {
-    loadJSON("seq_best", 0).then(setBest);
+    loadJSON("seq_best", 0).then((val) => {
+      setBest(val);
+      initialBestRef.current = val; // Сохраняем изначальное значение
+    });
   }, []);
 
   // проигрывание/старт уровня
@@ -48,9 +55,13 @@ export default function SequenceMemoryScreen() {
     if (phase !== "input") return;
 
     if (tile === sequence[idx]) {
+      // Тактильная обратная связь при правильном выборе
+      await triggerHapticFeedback("light");
+
       // закрыли всю последовательность — уровень пройден
       if (idx + 1 === sequence.length) {
-        try { await match(); } catch {}
+        await triggerHapticFeedback("success");
+        try { await match(); } catch { }
         const extended = sequence.concat(randInt(0, GRID - 1));
         setSequence(extended);
         setLevel((l) => l + 1);
@@ -63,11 +74,28 @@ export default function SequenceMemoryScreen() {
         setIdx((i) => i + 1);
       }
     } else {
-      if (level - 1 > best) {
-        setBest(level - 1);
-        await saveJSON("seq_best", level - 1);
+      // Тактильная обратная связь при ошибке
+      console.log("❌ SequenceMemory: Неправильная ячейка! tile=", tile, "expected=", sequence[idx]);
+      await triggerHapticFeedback("error");
+
+      const finalScore = level - 1;
+      console.log("📊 SequenceMemory: finalScore=", finalScore, "initialBest=", initialBestRef.current);
+      const isNewRecord = finalScore > initialBestRef.current; // Сравниваем с изначальным best
+      console.log("🎯 SequenceMemory: isNewRecord=", isNewRecord);
+      if (isNewRecord) {
+        setBest(finalScore);
+        await saveJSON("seq_best", finalScore);
+        // Уведомление о новом рекорде ТОЛЬКО при проигрыше
+        console.log("📢 SequenceMemory: Отправка уведомления о новом рекорде", finalScore);
+        // Не блокируем UI - уведомление отправляется асинхронно без await
+        notifyNewRecord("sequence", finalScore).catch(err => {
+          console.warn("Notification error:", err);
+        });
+        console.log("📢 SequenceMemory: Уведомление запущено");
       }
+      console.log("🏁 SequenceMemory: Устанавливаем phase='over'");
       setPhase("over");
+      console.log("✅ SequenceMemory: Блок else завершён");
     }
   };
 
@@ -75,6 +103,7 @@ export default function SequenceMemoryScreen() {
     setSequence([]);
     setLevel(1);
     setPhase("show");
+    initialBestRef.current = best; // Обновляем изначальный best для новой сессии
   };
 
   return (
@@ -125,17 +154,25 @@ export default function SequenceMemoryScreen() {
                   source={require("../../assets/videos/cat.mp4")}
                   style={styles.cardVideo}
                   resizeMode="cover"
-                  repeat
-                  muted
-                  paused={false}
+                  isLooping
+                  isMuted
+                  shouldPlay
                   onError={(e) => console.warn("native video error", e)}
                 />
               )}
             </View>
 
-            <PressableScale style={styles.btn} onPress={restart}>
-              <Text style={styles.btnText}>Заново</Text>
-            </PressableScale>
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 8 }}>
+              <PressableScale style={styles.btn} onPress={restart}>
+                <Text style={styles.btnText}>Заново</Text>
+              </PressableScale>
+              <PressableScale
+                style={[styles.btn, { backgroundColor: "#10b981" }]}
+                onPress={() => shareResults("sequence", level - 1)}
+              >
+                <Text style={styles.btnText}>Поделиться</Text>
+              </PressableScale>
+            </View>
           </View>
         </View>
       )}

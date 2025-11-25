@@ -4,7 +4,8 @@ import PressableScale from "../components/PressableScale";
 import { shuffle } from "../lib/utils";
 import { loadJSON, saveJSON } from "../lib/storage";
 import { colors } from "../theme/colors";
-import { play } from "../lib/sound"; // <-- добавили
+import { play } from "../lib/sound";
+import { triggerHapticFeedback } from "../lib/platformFeatures";
 
 // Палитра владельца пары
 const P1_COLOR = "#EDEDED"; // белый (игрок 1)
@@ -12,8 +13,8 @@ const P2_COLOR = "#3B82F6"; // синий (игрок 2)
 
 // Достаточно для 20 пар (40 карт)
 const EMOJI = [
-  "🍉","🚗","🍍","⚽","🚌","✈️","🚀","🐶","🐱","🦊",
-  "🐼","🎲","🎧","💡","📚","🧩","🍔","🍩","🚲","🛵"
+  "🍉", "🚗", "🍍", "⚽", "🚌", "✈️", "🚀", "🐶", "🐱", "🦊",
+  "🐼", "🎲", "🎧", "💡", "📚", "🧩", "🍔", "🍩", "🚲", "🛵"
 ];
 
 // Случайное чётное число в диапазоне [min,max]
@@ -83,6 +84,8 @@ export default function CardMatchScreen() {
       return d;
     });
 
+    triggerHapticFeedback("light");
+
     setOpen(prevOpen => {
       const nextOpen = [...prevOpen, index];
 
@@ -105,10 +108,12 @@ export default function CardMatchScreen() {
 
               // проиграть звук совпадения
               play("match");
+              triggerHapticFeedback("success");
 
               // текущий сохраняет ход (НЕ переключаем current)
             } else {
               // Не угадал — закрываем и передаём ход сопернику
+              triggerHapticFeedback("warning");
               A.revealed = false; B.revealed = false;
               setCurrent(c => (c === 1 ? 2 : 1));
             }
@@ -128,7 +133,7 @@ export default function CardMatchScreen() {
   const isOver = matchedPairs === totalPairs && totalPairs > 0;
   const winner =
     !isOver ? null :
-    score1 === score2 ? 0 : (score1 > score2 ? 1 : 2);
+      score1 === score2 ? 0 : (score1 > score2 ? 1 : 2);
 
   // при завершении — обновить лучший личный счёт
   React.useEffect(() => {
@@ -175,8 +180,8 @@ export default function CardMatchScreen() {
           const up = c.revealed || c.matched;
           const ownerStyle =
             c.matched && c.owner === 1 ? styles.cardOwnerP1 :
-            c.matched && c.owner === 2 ? styles.cardOwnerP2 :
-            null;
+              c.matched && c.owner === 2 ? styles.cardOwnerP2 :
+                null;
 
           return (
             <PressableScale
@@ -222,26 +227,26 @@ export default function CardMatchScreen() {
 const CARD_W = 70, CARD_H = 90;
 
 const styles = StyleSheet.create({
-  container: { flex:1, padding: 14, alignItems:"center", backgroundColor: colors.bg },
-  top: { width:"100%", flexDirection:"row", justifyContent:"space-between", marginBottom: 8 },
+  container: { flex: 1, padding: 14, alignItems: "center", backgroundColor: colors.bg },
+  top: { width: "100%", flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   meta: { fontSize: 13, color: colors.subtext },
 
   turnBar: {
-    flexDirection:"row", alignItems:"center", gap: 6,
-    backgroundColor: colors.surface, borderWidth:1, borderColor: colors.outline,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.outline,
     paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, marginBottom: 8
   },
   dot: { width: 12, height: 12, borderRadius: 6, marginRight: 4 },
   turnText: { color: colors.subtext, fontSize: 13, marginRight: 10 },
-  turnTextActive: { color: colors.text, fontWeight:"800" },
+  turnTextActive: { color: colors.text, fontWeight: "800" },
 
-  scores: { flexDirection:"row", gap: 16, marginBottom: 10 },
-  score: { fontWeight:"900", fontSize: 16 },
+  scores: { flexDirection: "row", gap: 16, marginBottom: 10 },
+  score: { fontWeight: "900", fontSize: 16 },
 
-  grid: { width: 360, flexDirection:"row", flexWrap:"wrap", gap: 8, justifyContent:"center" },
+  grid: { width: 360, flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: "center" },
   card: {
-    width: CARD_W, height: CARD_H, borderRadius: 12, alignItems:"center", justifyContent:"center",
-    backgroundColor: colors.surface2, borderWidth:2, borderColor: colors.outline
+    width: CARD_W, height: CARD_H, borderRadius: 12, alignItems: "center", justifyContent: "center",
+    backgroundColor: colors.surface2, borderWidth: 2, borderColor: colors.outline
   },
   cardUp: { backgroundColor: colors.surface, borderColor: colors.primary },
   cardOwnerP1: { backgroundColor: "#2A2A2A", borderColor: P1_COLOR },
@@ -249,19 +254,19 @@ const styles = StyleSheet.create({
   cardText: { fontSize: 28, color: colors.text },
   cardTextOwner: { textShadowColor: "#000", textShadowRadius: 4 },
 
-  rowBtns: { flexDirection:"row", gap: 10, marginTop: 8 },
+  rowBtns: { flexDirection: "row", gap: 10, marginTop: 8 },
 
   btn: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12 },
-  btnText: { color: colors.primaryText, fontWeight:"900", fontSize: 13 },
+  btnText: { color: colors.primaryText, fontWeight: "900", fontSize: 13 },
 
-  btnOutline: { borderWidth:2, borderColor: colors.primary, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12 },
-  btnOutlineText: { color: colors.primary, fontWeight:"900", fontSize: 13 },
+  btnOutline: { borderWidth: 2, borderColor: colors.primary, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12 },
+  btnOutlineText: { color: colors.primary, fontWeight: "900", fontSize: 13 },
 
-  overlay: { position: "absolute", inset: 0, backgroundColor:"#0008", alignItems:"center", justifyContent:"center" },
+  overlay: { position: "absolute", inset: 0, backgroundColor: "#0008", alignItems: "center", justifyContent: "center" },
   resultCard: {
-    backgroundColor: colors.surface, borderWidth:1, borderColor: colors.outline,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.outline,
     padding: 18, borderRadius: 16, gap: 8, minWidth: 280, alignItems: "center"
   },
-  resultTitle: { fontSize: 20, fontWeight:"900", color: colors.text },
+  resultTitle: { fontSize: 20, fontWeight: "900", color: colors.text },
   resultText: { color: colors.subtext },
 });

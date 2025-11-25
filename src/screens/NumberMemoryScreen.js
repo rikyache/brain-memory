@@ -1,12 +1,13 @@
 // src/screens/NumberMemoryScreen.js
 import React from "react";
 import { View, Text, StyleSheet, TextInput, Platform } from "react-native";
-import Video from "react-native-video"; // для iOS/Android
+import { Video } from "expo-av"; // для iOS/Android
 import PressableScale from "../components/PressableScale";
 import { genNumberOfDigits } from "../lib/utils";
 import { loadJSON, saveJSON } from "../lib/storage";
 import { match, lose } from "../lib/sound";
 import { colors } from "../theme/colors";
+import { triggerHapticFeedback, notifyNewRecord, shareResults } from "../lib/platformFeatures";
 
 export default function NumberMemoryScreen() {
   const [level, setLevel] = React.useState(1);
@@ -15,7 +16,15 @@ export default function NumberMemoryScreen() {
   const [input, setInput] = React.useState("");
   const [best, setBest] = React.useState(0);
 
-  React.useEffect(() => { loadJSON("nm_best", 0).then(setBest); }, []);
+  // Используем ref для отслеживания изначального best
+  const initialBestRef = React.useRef(0);
+
+  React.useEffect(() => {
+    loadJSON("nm_best", 0).then((val) => {
+      setBest(val);
+      initialBestRef.current = val; // Сохраняем изначальное значение
+    });
+  }, []);
 
   React.useEffect(() => {
     const t = genNumberOfDigits(level);
@@ -32,11 +41,13 @@ export default function NumberMemoryScreen() {
     const ok = input.trim() === target;
 
     if (ok) {
-      try { await match(); } catch {}
+      await triggerHapticFeedback("success");
+      try { await match(); } catch { }
       const next = level + 1;
       if (next - 1 > best) {
         setBest(next - 1);
         await saveJSON("nm_best", next - 1);
+        // Уведомление НЕ отправляем - только обновляем рекорд
       }
       if (next > 20) {
         setPhase("over");
@@ -44,18 +55,34 @@ export default function NumberMemoryScreen() {
         setLevel(next);
       }
     } else {
-      try { await lose(); } catch {}
-      if (level - 1 > best) {
-        setBest(level - 1);
-        await saveJSON("nm_best", level - 1);
+      console.log("❌ NumberMemory: Неправильное число! input=", input.trim(), "target=", target);
+      await triggerHapticFeedback("error");
+      try { await lose(); } catch { }
+      const finalScore = level - 1;
+      console.log("📊 NumberMemory: finalScore=", finalScore, "initialBest=", initialBestRef.current);
+      const isNewRecord = finalScore > initialBestRef.current; // Сравниваем с изначальным best
+      console.log("🎯 NumberMemory: isNewRecord=", isNewRecord);
+      if (isNewRecord) {
+        setBest(finalScore);
+        await saveJSON("nm_best", finalScore);
+        // Уведомление о новом рекорде ТОЛЬКО при проигрыше
+        console.log("📢 NumberMemory: Отправка уведомления о новом рекорде", finalScore);
+        // Не блокируем UI - уведомление отправляется асинхронно без await
+        notifyNewRecord("number", finalScore).catch(err => {
+          console.warn("Notification error:", err);
+        });
+        console.log("📢 NumberMemory: Уведомление запущено");
       }
+      console.log("🏁 NumberMemory: Устанавливаем phase='over'");
       setPhase("over");
+      console.log("✅ NumberMemory: Блок else завершён");
     }
   };
 
   const restart = () => {
     setLevel(1);
     setPhase("show");
+    initialBestRef.current = best; // Обновляем изначальный best для новой сессии
   };
 
   return (
@@ -113,17 +140,25 @@ export default function NumberMemoryScreen() {
                   source={require("../../assets/videos/cat.mp4")}
                   style={styles.cardVideo}
                   resizeMode="cover"
-                  repeat
-                  muted
-                  paused={false}
+                  isLooping
+                  isMuted
+                  shouldPlay
                   onError={(e) => console.warn("native video error", e)}
                 />
               )}
             </View>
 
-            <PressableScale style={styles.btn} onPress={restart}>
-              <Text style={styles.btnText}>Заново</Text>
-            </PressableScale>
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 8 }}>
+              <PressableScale style={styles.btn} onPress={restart}>
+                <Text style={styles.btnText}>Заново</Text>
+              </PressableScale>
+              <PressableScale
+                style={[styles.btn, { backgroundColor: "#10b981" }]}
+                onPress={() => shareResults("number", level - 1)}
+              >
+                <Text style={styles.btnText}>Поделиться</Text>
+              </PressableScale>
+            </View>
           </View>
         </View>
       )}
@@ -132,7 +167,7 @@ export default function NumberMemoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex:1, padding: 18, alignItems: "center", justifyContent: "center", gap: 12, backgroundColor: colors.bg },
+  container: { flex: 1, padding: 18, alignItems: "center", justifyContent: "center", gap: 12, backgroundColor: colors.bg },
   meta: { fontSize: 15, color: colors.subtext },
   number: { fontSize: 44, fontWeight: "900", letterSpacing: 2, textAlign: "center", color: colors.text },
   label: { fontSize: 16, color: colors.text },
@@ -146,7 +181,7 @@ const styles = StyleSheet.create({
     position: "absolute", inset: 0, backgroundColor: "#0008", alignItems: "center", justifyContent: "center"
   },
   card: {
-    backgroundColor: colors.surface, borderWidth:1, borderColor: colors.outline,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.outline,
     padding: 18, borderRadius: 16, gap: 10, minWidth: 260, alignItems: "center"
   },
   cardTitle: { fontSize: 20, fontWeight: "900", color: colors.text },
