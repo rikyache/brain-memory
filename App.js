@@ -3,9 +3,8 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
-import { Audio } from "expo-av";
 import { colors } from "./src/theme/colors";
-import { initSoundSettings } from "./src/lib/sound";
+import { initSound } from "./src/lib/sound";
 
 // Экраны
 import HomeScreen from "./src/screens/HomeScreen";
@@ -23,20 +22,8 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   React.useEffect(() => {
-    (async () => {
-      try {
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          allowsRecordingIOS: false,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-          interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-          interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
-        });
-      } catch {
-      }
-      await initSoundSettings();
-    })();
+    // Инициализация звуковой системы (включает настройку Audio Mode)
+    initSound().catch((e) => console.warn("Sound init error:", e));
   }, []);
 
   return (
