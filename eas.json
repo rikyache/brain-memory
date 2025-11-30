@@ -27,9 +27,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@email.com",
+        "appleId": "fancityfun@gmail.com",
         "ascAppId": "1234567890",
-        "appleTeamId": "TEAMID123"
+        "appleTeamId": "brainmemory_team"
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account-key.json",
