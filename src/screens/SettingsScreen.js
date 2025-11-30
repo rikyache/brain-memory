@@ -1,7 +1,6 @@
-// src/screens/SettingsScreen.js
 import React from "react";
-import { View, Text, Switch, StyleSheet, SafeAreaView } from "react-native";
-import Slider from "@react-native-community/slider"; // default import!
+import { View, Text, Switch, StyleSheet } from "react-native";
+import Slider from "@react-native-community/slider";
 import { colors } from "../theme/colors";
 import { loadJSON } from "../lib/storage";
 import {
@@ -16,14 +15,12 @@ const K_HAPTICS = "@settings:hapticsEnabled";
 const K_VOLUME = "@settings:volume";
 
 export default function SettingsScreen() {
-
   const initial = getState();
   const [sound, setSound] = React.useState(initial.soundEnabled);
   const [haptics, setHaptics] = React.useState(initial.hapticsEnabled);
   const [volume, setVol] = React.useState(
     typeof initial.volume === "number" ? initial.volume : 1
   );
-
 
   React.useEffect(() => {
     (async () => {
@@ -55,7 +52,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>Настройки</Text>
 
       <View style={styles.row}>
@@ -96,7 +93,7 @@ export default function SettingsScreen() {
         отключить звук или отрегулировать громкость. На iOS звук активен даже в
         беззвучном режиме (игровой режим).
       </Text>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -104,6 +101,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    paddingTop: 60,
     backgroundColor: colors.bg ?? "#0b0f1a",
   },
   title: {
