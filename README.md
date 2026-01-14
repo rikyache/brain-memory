@@ -1,13 +1,13 @@
-# 🧠 Brain Memory — README (dev)
+#  Brain Memory — README (dev)
 
-## ⚙️ Требования
+##  Требования
 - Node.js ≥ 18
 - npm / yarn / pnpm
 - Expo CLI (`npx expo start` — глобально не обязательно)
 
 ---
 
-## 🚀 Установка и запуск
+##  Установка и запуск
 
 ```bash
 git clone https://github.com/rikyache/brain-memory
@@ -25,7 +25,7 @@ npm run web       # Web
 
 ---
 
-## 📂 Структура
+##  Структура
 ```
 App.js
 src/
@@ -38,7 +38,7 @@ package.json
 
 ---
 
-## 🧩 Примечание
+##  Примечание
 - `.env` не используется
 - Все зависимости ставятся через `npm install`
 - Для Expo Go достаточно `npm run start`
