@@ -1,4 +1,3 @@
-// src/lib/stats.js
 import { loadJSON, saveJSON, removeKey } from "./storage";
 import { record as playRecord } from "./sound";
 

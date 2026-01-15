@@ -1,8 +1,10 @@
 import React from "react";
-import { View, Text, Switch, StyleSheet } from "react-native";
+import { View, Text, Switch, StyleSheet, Alert } from "react-native";
 import Slider from "@react-native-community/slider";
 import { colors } from "../theme/colors";
+import PressableScale from "../components/PressableScale";
 import { loadJSON } from "../lib/storage";
+import { uploadBestsToSupabase, downloadBestsFromSupabase } from "../lib/resultsSync";
 import {
   getState,
   setSoundEnabled,
@@ -51,6 +53,28 @@ export default function SettingsScreen() {
     try { await setVolume(v); } catch {}
   };
 
+  const onSendResults = async () => {
+    try {
+      await uploadBestsToSupabase();
+      Alert.alert("Готово", "Результаты отправлены на сервер ✅");
+    } catch (e) {
+      Alert.alert("Ошибка", String(e?.message || e));
+    }
+  };
+
+  const onDownloadResults = async () => {
+    try {
+      const r = await downloadBestsFromSupabase({ overwriteLocal: true });
+      if (!r.ok) {
+        Alert.alert("Нет данных", r.message || "На сервере нет данных.");
+        return;
+      }
+      Alert.alert("Готово", "Результаты скачаны и сохранены локально ✅");
+    } catch (e) {
+      Alert.alert("Ошибка", String(e?.message || e));
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Настройки</Text>
@@ -93,6 +117,13 @@ export default function SettingsScreen() {
         отключить звук или отрегулировать громкость. На iOS звук активен даже в
         беззвучном режиме (игровой режим).
       </Text>
+
+      <PressableScale style={styles.btnPrimary} onPress={onSendResults}>
+        <Text style={styles.btnPrimaryText}>Отправить результаты</Text>
+      </PressableScale>
+      <PressableScale style={styles.btnPrimary} onPress={onDownloadResults}>
+        <Text style={styles.btnPrimaryText}>Скачать результаты</Text>
+      </PressableScale>
     </View>
   );
 }
@@ -129,5 +160,17 @@ const styles = StyleSheet.create({
     color: "#97a3b6",
     fontSize: 13,
     lineHeight: 18,
+  },
+  btnPrimary: {
+    width: "100%",
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  btnPrimaryText: {
+    color: "#0b0f1a",
+    fontWeight: "900",
   },
 });

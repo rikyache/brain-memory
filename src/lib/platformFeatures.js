@@ -1,4 +1,3 @@
-// src/lib/platformFeatures.js
 import { Platform, Share, Alert } from "react-native";
 import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
@@ -233,9 +232,8 @@ export async function notifyNewRecord(gameType, score) {
     }
 }
 
-// ============================================================================
+
 // SHARE (Поделиться результатами)
-// ============================================================================
 
 /**
  * Поделиться результатами игры
@@ -297,9 +295,8 @@ export async function shareResults(gameType, score) {
     }
 }
 
-// ============================================================================
 // PLATFORM CONFIG (Платформо-специфичная конфигурация)
-// ============================================================================
+
 
 /**
  * Получить конфигурацию для текущей платформы

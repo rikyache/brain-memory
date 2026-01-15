@@ -6,7 +6,7 @@ import {
   getState 
 } from './sound';
 
-// Мокаем Expo зависимости
+// Мок Expo зависимостей
 jest.mock('expo-av', () => ({
   Audio: {
     setAudioModeAsync: jest.fn(),

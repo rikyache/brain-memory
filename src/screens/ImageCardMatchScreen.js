@@ -1,4 +1,3 @@
-// src/screens/ImageCardMatchScreen.js
 import React from "react";
 import { View, Text, StyleSheet, FlatList, Alert, Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";

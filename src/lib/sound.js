@@ -1,4 +1,3 @@
-// src/lib/sound.js
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { loadJSON, saveJSON } from "./storage";
@@ -12,7 +11,7 @@ let soundEnabled = true;
 let hapticsEnabled = true;
 let volume = 1.0;
 
-// Регистр звуков (положи файлы в /assets/sounds)
+// Регистр звуков
 const REGISTRY = {
   click:   require("../../assets/sounds/ui-click.mp3"),
   match:   require("../../assets/sounds/match.mp3"),

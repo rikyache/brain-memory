@@ -1,4 +1,3 @@
-// src/lib/api.js
 // Пример управления ресурсами: загрузка слов через API с отменой и фолбэком.
 const FALLBACK = [
   "subnormal","theory","bridge","orange","system","planet","unique","forest","memory","object",
