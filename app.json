@@ -29,7 +29,6 @@
       }
     },
     "android": {
-      "bundleIdentifier": "com.sxd0.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B0B0F"
@@ -68,7 +67,6 @@
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
-    },
-    "owner": "sxd0"
+    }
   }
 }
